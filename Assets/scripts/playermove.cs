@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
+[RequireComponent(typeof(CharacterController), typeof(PlayerInput))]
 public class playermove : MonoBehaviour
 {
 // https://medium.com/eincode/create-third-person-controller-in-unity-838809d1a4da guide i used
@@ -16,12 +18,38 @@ Camera cam;
 [SerializeField] float gravityMultiplier = 1;
 [SerializeField] float groundedGravity = -0.5f;
 [SerializeField] float jumpHeight = 10f;
-
+private PlayerInput playerInput;
+private Transform cameraTransform;
+private InputAction shootAction;
+[SerializeField] private GameObject lazerPrefab;
+[SerializeField] private Transform barrelTransform;
+[SerializeField] private Transform lazerParent;
+[SerializeField] private float LaserHitMissDistance = 100f;
     void Awake() 
 {      
      controller = GetComponent<CharacterController>(); 
+     playerInput = GetComponent<PlayerInput>();
          cam = Camera.main;
+         cameraTransform = Camera.main.transform;
+         shootAction = playerInput.actions["Shoot"];
 }
+private void OnEnable(){
+    shootAction.performed += _ => ShootLaser();
+}
+private void OnDisable(){
+    shootAction.performed += _ => ShootLaser();
+}
+ private void ShootLaser(){
+    RaycastHit hit;
+    GameObject Lazer = GameObject.Instantiate(lazerPrefab, barrelTransform.position, Quaternion.identity, lazerParent);
+    LazerController lazerController = Lazer.GetComponent<LazerController>();
+if(Physics.Raycast(cameraTransform.position, cameraTransform.forward, out hit, Mathf.Infinity))
+{
+lazerController.target = cameraTransform.position + cameraTransform.forward * LaserHitMissDistance;
+lazerController.hit = true;
+}
+
+ }
 
 void Update()
     {
