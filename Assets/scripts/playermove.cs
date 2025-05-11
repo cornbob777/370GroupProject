@@ -12,6 +12,7 @@ float currentAngle;
 float currentAngleVelocity;
 CharacterController controller;
 Camera cam;
+Animator animator;
 [SerializeField] float speed = 10f;
 [SerializeField] float velocityY = 0f;
 [SerializeField] float gravity = 9.8f;
@@ -26,12 +27,14 @@ private InputAction shootAction;
 [SerializeField] private Transform lazerParent;
 [SerializeField] private float LaserHitMissDistance = 100f;
     void Awake() 
-{      
+{     
+      animator = GetComponentInChildren<Animator>();
      controller = GetComponent<CharacterController>(); 
      playerInput = GetComponent<PlayerInput>();
          cam = Camera.main;
          cameraTransform = Camera.main.transform;
          shootAction = playerInput.actions["Shoot"];
+     
 }
 private void OnEnable(){
     shootAction.performed += _ => ShootLaser();
@@ -61,9 +64,12 @@ void Update()
 {
     if (controller.isGrounded && velocityY < 0f)
         velocityY = groundedGravity;
+        animator.SetBool("Grounded", true);
         if (controller.isGrounded && Input.GetKey(KeyCode.Space))
     {
-        velocityY = Mathf.Sqrt(jumpHeight * 2f * gravity);
+            animator.SetBool("Grounded", false);
+            velocityY = Mathf.Sqrt(jumpHeight * 2f * gravity);
+       
     }
         velocityY -= gravity * gravityMultiplier * Time.deltaTime;
     controller.Move(Vector3.up * velocityY * Time.deltaTime);
@@ -76,11 +82,16 @@ void Update()
     Vector3 movement = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")).normalized;
     if (movement.magnitude >= 0.1f)
     {
+        animator.SetBool("Moving", true);
         float targetAngle = Mathf.Atan2(movement.x, movement.z) * Mathf.Rad2Deg + cam.transform.eulerAngles.y;
         currentAngle = Mathf.SmoothDampAngle(currentAngle, targetAngle, ref currentAngleVelocity, rotationSmoothTime);
         transform.rotation = Quaternion.Euler(0, currentAngle, 0);
         Vector3 rotatedMovement = Quaternion.Euler(0, targetAngle, 0) * Vector3.forward;
         controller.Move(rotatedMovement * speed * Time.deltaTime);
+    }
+    else
+    {
+     animator.SetBool("Moving", false);
     }
 }
 }
